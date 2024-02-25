@@ -8,12 +8,6 @@ import java.util.Comparator;
 public class Main {
     public static void main(String[] args){
 
-//      Code in case I want to make totalClock, filePath cmd line args:
-//        int totalClock = Integer.parseInt(args[0]);
-//        String filePath = args[1];
-
-        int totalClock = 20;
-
         //A process is defined as an array, [id][arrival][burst][priority]
         ArrayList<int[]> incomingProcesses = new ArrayList<>();
 
@@ -42,7 +36,9 @@ public class Main {
         }
 
         //Sort incoming processes by arrival time
-        incomingProcesses.sort(Comparator.comparingInt(arr->arr[1]));
+        incomingProcesses.sort(Comparator.comparingInt(prc->prc[1]));
+        //Total clock time is the sum of process burst times
+        int totalClock = incomingProcesses.stream().mapToInt(prc->prc[2]).sum();
 
         sjf(new PriorityQueue<>(processQueue), new ArrayList<>(incomingProcesses), totalClock);
         srt(new PriorityQueue<>(processQueue), new ArrayList<>(incomingProcesses), totalClock);
@@ -52,6 +48,8 @@ public class Main {
         System.out.println("Results for SJF:");
         boolean busy = false;
         int busyUntil = 0;
+        double totalTurnaround = 0;
+        int processCount = ip.size();
         //For loop simulates clock cycles
         for (int i = 0; i <= timeEnd; i++){
             int[] temp;
@@ -64,14 +62,19 @@ public class Main {
             if (!pq.isEmpty() && !busy){
                 temp = pq.poll();
                 System.out.println("Process " + temp[0] + " completed at clock: " + (i + temp[2]));
+                //TT = Completion - Arrival (same as burst + wait time)
+                totalTurnaround += i + temp[2] - temp[1];
                 busy = true;
                 busyUntil = i + temp[2];    //Block CPU until process would be complete
             }
         }
+        System.out.println("Average turnaround time: " + (totalTurnaround/processCount) + " ms");
     }
 
     private static void srt(PriorityQueue<int[]> pq, ArrayList<int[]> ip, int timeEnd){
         System.out.println("Results for SRT:");
+        double totalTurnaround = 0;
+        int processCount = ip.size();
         //For loop simulates clock cycles
         for (int i = 0; i <= timeEnd; i++){
             int[] temp;
@@ -85,10 +88,15 @@ public class Main {
                 temp = pq.poll();
                 temp[2]--;
                 //If process is finished:
-                if (temp[2] == 0){System.out.println("Process " + temp[0] + " completed at clock: " + (i + 1));}
+                if (temp[2] == 0){
+                    System.out.println("Process " + temp[0] + " completed at clock: " + (i + 1));
+                    //TT = Completion - Arrival (same as burst + wait time)
+                    totalTurnaround += i + 1 - temp[1];
+                }
                 //Else add decremented process back into queue to be sorted
                 else{pq.add(temp);}
             }
         }
+        System.out.println("Average turnaround time: " + (totalTurnaround/processCount) + " ms");
     }
 }
